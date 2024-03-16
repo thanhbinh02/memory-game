@@ -1,5 +1,7 @@
-import { FC } from "react";
+import { FC, useEffect, useState } from "react";
 import { useToggle } from "usehooks-ts";
+import { useShallow } from "zustand/react/shallow";
+import { useGameStore } from "../hooks";
 import { TImage } from "../ts";
 type Props = {
   image: TImage;
@@ -7,8 +9,50 @@ type Props = {
 
 const FlipCard: FC<Props> = ({ image }) => {
   const [value, toggle] = useToggle(false);
+  const [isShowImage, setIsShowImage] = useState(false);
+
+  const [selectedImages, setSelectedImages] = useGameStore(
+    useShallow((state) => [state.selectedImages, state.setSelectedImages])
+  );
+
+  useEffect(() => {
+    if (selectedImages.length === 2) {
+      // Firstly, I check if image is in selected images
+      const isImagesSelected = selectedImages.some(
+        (item) => item.uuid === image.uuid
+      );
+
+      // Secondly, I check if 2 images in the selectedImages array have the same ID
+      const isCheckSameId = selectedImages[0].id === selectedImages[1].id;
+
+      if (isImagesSelected) {
+        setTimeout(() => {
+          if (isCheckSameId) {
+            setIsShowImage(true);
+          } else {
+            toggle();
+          }
+          setSelectedImages([]);
+        }, 500);
+      }
+    }
+  }, [image.uuid, selectedImages, setSelectedImages, toggle]);
 
   const handleClick = () => {
+    if (selectedImages.length === 2) return;
+
+    if (selectedImages.length === 0) {
+      setSelectedImages([image]);
+    }
+
+    if (selectedImages.length === 1 && selectedImages[0].uuid === image.uuid) {
+      setSelectedImages([]);
+    }
+
+    if (selectedImages.length === 1 && selectedImages[0].uuid !== image.uuid) {
+      setSelectedImages([...selectedImages, image]);
+    }
+
     toggle();
   };
 
@@ -18,7 +62,7 @@ const FlipCard: FC<Props> = ({ image }) => {
         onClick={handleClick}
         className={`relative w-full h-full card ${
           value ? "rotate-y-180deg" : ""
-        }`}
+        } ${isShowImage ? "pointer-events-none" : ""}`}
       >
         <div className="backface-visibility-hidden w-24 h-24 bg-pink-500" />
 

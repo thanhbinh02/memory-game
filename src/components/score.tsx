@@ -1,5 +1,9 @@
+import { useGameStore } from "../hooks";
+
 const Score = () => {
-  return <div>Score</div>;
+  const score = useGameStore((state) => state.score);
+
+  return <div className="text-3xl">Score: {score}</div>;
 };
 
 export default Score;
